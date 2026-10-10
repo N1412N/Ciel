@@ -1,0 +1,29 @@
+﻿# Core Web & GUI Framework
+flask>=3.0.0
+requests>=2.31.0
+pywebview>=5.0.0
+psutil>=5.9.0
+
+# Neural Voice & Speech Recognition
+faster-whisper>=1.0.0
+pyaudio>=0.2.14
+edge-tts>=6.1.0
+SpeechRecognition>=3.10.0
+sounddevice>=0.4.6
+numpy>=1.24.0
+scipy>=1.11.0
+
+# Agent Tools & System Utilities
+mss>=9.0.0
+beautifulsoup4>=4.12.0
+duckduckgo-search>=6.0.0
+
+# Global Hotkey Support
+keyboard>=0.13.5
+
+# Windows Toast Notifications
+winotify>=1.1.0
+
+# Desktop GUI Automation & Recycle Bin
+pyautogui>=0.9.54
+send2trash>=1.8.0

@@ -1,0 +1,12 @@
+{
+  "version": "2.2.0",
+  "target": "antigravity",
+  "installed_at": "2026-09-08T17:42:00Z",
+  "summary": {
+    "rules": 122,
+    "workflows": 94,
+    "skills": 286,
+    "agents": 68
+  },
+  "managed_files_count": 572
+}

@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#060913">
+  <link rel="icon" type="image/png" href="/static/favicon.png?v=8.0">
+  <title>Ciel Infinite Studio · Autonomous AI Workstation</title>
+
+  <!-- Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Markdown & Code Highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
+
+  <!-- Ciel Studio Custom Stylesheet -->
+  <link rel="stylesheet" href="/static/css/ciel.css?v={{ version }}">
+</head>
+<body>
+  <!-- Ambient Cosmic Background -->
+  <div class="ambient-bg"></div>
+  <div class="ambient-grid"></div>
+
+  <!-- Root Application Layout -->
+  <div class="app-container">
+    
+    <!-- LEFT ACTIVITY RAIL -->
+    <aside class="activity-rail">
+      <div class="rail-top">
+        <!-- Living Thinking Orb Core (Jakub Antalik 2D Particle Engine) -->
+        <div class="ciel-orb-wrapper state-breathing" id="ciel-core-wrapper" title="Ciel Living Thinking Core · Click to inspect or change Orb Mode">
+          <div class="ciel-core-orb" id="ciel-core-orb">
+            <canvas id="ciel-core-canvas" width="44" height="44"></canvas>
+            <img src="/static/favicon.png?v=8.0" alt="Ciel Emblem" class="ciel-core-emblem">
+          </div>
+          <div class="orb-state-indicator" id="ciel-orb-dot" title="Mode: Breathing"></div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="rail-nav">
+          <button class="rail-btn active" id="nav-chat" data-view="chat" title="Chat & Agent (Alt+1)">
+            <i class="fas fa-comment-dots"></i>
+          </button>
+          <button class="rail-btn" id="nav-tasks" data-view="tasks" title="Autonomous Tasks (Alt+2)">
+            <i class="fas fa-bolt"></i>
+            <span class="rail-badge" id="task-badge">0</span>
+          </button>
+          <button class="rail-btn" id="nav-ide" data-view="ide" title="Code Studio & Runner (Alt+3)">
+            <i class="fas fa-code"></i>
+          </button>
+          <button class="rail-btn" id="nav-primitive" data-view="primitive" title="Primitive Geometric Art (Alt+4)">
+            <i class="fas fa-shapes"></i>
+          </button>
+          <button class="rail-btn" id="nav-diffusion" data-view="diffusion" title="Diffusion AI Images (Alt+5)">
+            <i class="fas fa-palette"></i>
+          </button>
+          <button class="rail-btn" id="nav-memory" data-view="memory" title="Knowledge Vault (Alt+6)">
+            <i class="fas fa-brain"></i>
+          </button>
+        </nav>
+      </div>
+
+      <div class="rail-bottom">
+        <button class="rail-btn" id="nav-settings" data-view="settings" title="System Settings & Telemetry">
+          <i class="fas fa-sliders-h"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN INTERFACE VIEWPORT -->
+    <main class="main-area">
+      
+      <!-- TOP GLOBAL CONTROL BAR -->
+      <header class="top-bar">
+        <div class="top-bar-left">
+          <div class="view-breadcrumb">
+            <i class="fas fa-comment-dots" id="breadcrumb-icon"></i>
+            <span class="crumb-title" id="breadcrumb-title">Chat & Copilot</span>
+          </div>
+
+          <!-- Model Switcher Pill -->
+          <div class="model-pill-container" title="Select AI Intelligence Engine">
+            <i class="fas fa-microchip model-pill-icon"></i>
+            <select class="model-select" id="model-select">
+              <option value="ciel-auto">Auto Router (Smart Dispatch)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Telemetry Gauges -->
+        <div class="top-bar-center">
+          <div class="telemetry-chip" title="Real-time Host CPU">
+            <span>CPU</span>
+            <div class="stat-bar-mini">
+              <div class="stat-bar-mini-fill cpu" id="hud-cpu-bar"></div>
+            </div>
+            <span id="hud-cpu-val">0%</span>
+          </div>
+
+          <div class="telemetry-chip" title="System Memory Usage">
+            <span>RAM</span>
+            <div class="stat-bar-mini">
+              <div class="stat-bar-mini-fill ram" id="hud-ram-bar"></div>
+            </div>
+            <span id="hud-ram-val">0%</span>
+          </div>
+
+          <div class="ollama-status-badge" id="ollama-badge" title="Click to start Ollama if offline">
+            <div class="ollama-dot"></div>
+            <span id="ollama-status-text">Ollama Active</span>
+          </div>
+
+          <div class="telemetry-chip orb-chip" id="hud-orb-chip" title="Click to inspect Ciel Thinking Orb state">
+            <span class="orb-pulse-mini" id="hud-orb-pulse"></span>
+            <span id="hud-orb-mode">Breathing</span>
+          </div>
+        </div>
+
+        <!-- Right Voice & Session Utilities -->
+        <div class="top-bar-right">
+          <!-- Voice Strip -->
+          <div class="voice-strip">
+            <button class="voice-btn" id="btn-mic" title="Voice Input / Dictation (Click to Speak / Click to Stop)">
+              <i class="fas fa-microphone"></i>
+            </button>
+            <button class="voice-btn" id="btn-toggle-wake" title="Wake Word 'Hey Ciel' (Click to Toggle On / Off)">
+              <i class="fas fa-ear-listen"></i>
+            </button>
+            <button class="voice-btn" id="btn-toggle-tts" title="Voice Responses TTS (Click to Toggle Sound)">
+              <i class="fas fa-volume-up"></i>
+            </button>
+          </div>
+
+          <!-- Past Conversations Button -->
+          <button class="session-selector-btn" id="btn-history-chats" title="View Past Conversations">
+            <i class="fas fa-history"></i>
+            <span>History</span>
+          </button>
+
+          <!-- New Chat Button -->
+          <button class="session-selector-btn" id="btn-new-chat" title="Start New Session">
+            <i class="fas fa-plus"></i>
+            <span>New Chat</span>
+          </button>
+
+          <!-- Floating Companion Sidecar (JARVIS) -->
+          <button class="session-selector-btn companion-btn" id="btn-launch-companion" title="Launch Floating Desktop Companion Sidecar">
+            <i class="fas fa-window-restore" style="color: var(--cyan);"></i>
+            <span>Companion</span>
+          </button>
+
+          <!-- Safe Shutdown -->
+          <button class="btn-icon-square btn-shutdown" id="btn-shutdown" title="Safely Exit Ciel">
+            <i class="fas fa-power-off"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- VIEWPORT STACK -->
+      <div class="viewport">
+        
+        <!-- ==========================================
+             VIEW 1: CHAT & DESKTOP AGENT
+             ========================================== -->
+        <section class="view-panel chat-view active" id="view-chat">
+          <div class="chat-feed" id="chat-feed">
+            <!-- Messages rendered dynamically -->
+          </div>
+
+          <!-- Starter Prompt Pills -->
+          <div class="starter-prompts-bar">
+            <div class="starter-pill" data-prompt="Generate a presentation on Artificial Intelligence">
+              <i class="fas fa-file-powerpoint" style="color: #f59e0b;"></i> Slide Presentation
+            </div>
+            <div class="starter-pill" data-prompt="Open canva and make a presentation about Future of Robotics">
+              <i class="fas fa-wand-magic-sparkles" style="color: #38bdf8;"></i> Canva Deck
+            </div>
+            <div class="starter-pill" data-prompt="OpenJarvis doctor">
+              <i class="fas fa-stethoscope"></i> OpenJarvis Doctor
+            </div>
+            <div class="starter-pill" data-prompt="JARVIS observe desktop context">
+              <i class="fas fa-eye"></i> JARVIS Observe
+            </div>
+            <div class="starter-pill" data-prompt="Launch coding routine">
+              <i class="fas fa-laptop-code"></i> Coding Routine
+            </div>
+            <div class="starter-pill" data-prompt="Analyze system performance and active processes">
+              <i class="fas fa-chart-line"></i> Check system health
+            </div>
+            <div class="starter-pill" data-prompt="Reproduce active project code in the IDE workspace">
+              <i class="fas fa-laptop-code"></i> Workspace review
+            </div>
+            <div class="starter-pill" data-prompt="Generate geometric primitive art from my recent screenshot">
+              <i class="fas fa-shapes"></i> Create primitive art
+            </div>
+            <div class="starter-pill" data-prompt="Search user files for recent python scripts">
+              <i class="fas fa-search"></i> Search files
+            </div>
+          </div>
+
+          <!-- Composer Box with Border Beam & Voice Glow (Libraries.dev) -->
+          <div class="chat-composer-box" id="chat-composer-box">
+            <div class="voice-glow-beam" id="voice-glow-beam"></div>
+            <div class="composer-glass has-border-beam" id="composer-glass">
+              <div class="border-beam-glow" id="composer-border-beam"></div>
+              <div class="composer-top-row">
+                <textarea 
+                  class="composer-textarea" 
+                  id="chat-input" 
+                  placeholder="Ask Ciel anything, execute commands, run tools, or write code... (Shift+Enter for newline)"
+                  rows="1"
+                ></textarea>
+              </div>
+              <div class="composer-actions-row">
+                <div class="composer-toggles">
+                  <div class="toggle-agent-pill active" id="agent-mode-toggle" title="Allow Ciel to autonomously use computer tools">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Agent Mode ON</span>
+                  </div>
+                </div>
+
+                <div class="composer-btn-group">
+                  <button class="composer-icon-btn" id="btn-composer-mic" title="Voice Dictation">
+                    <i class="fas fa-microphone"></i>
+                  </button>
+                  <button class="send-btn-circle" id="btn-send-chat" title="Send (Enter)">
+                    <i class="fas fa-arrow-up"></i>
+                  </button>
+                  <button class="stop-btn-circle" id="btn-stop-chat" title="Stop generating">
+                    <i class="fas fa-stop"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 2: AUTONOMOUS TASKS CENTER
+             ========================================== -->
+        <section class="view-panel tasks-view" id="view-tasks">
+          <div class="tasks-header">
+            <div class="section-title-group">
+              <h2><i class="fas fa-bolt" style="color: #38bdf8;"></i> Autonomous Background Tasks</h2>
+              <p>Monitor, inspect, and cancel long-running agent jobs and background workflows.</p>
+            </div>
+            <button class="ide-action-btn" id="btn-refresh-tasks"><i class="fas fa-sync-alt"></i> Refresh</button>
+          </div>
+          <div class="tasks-grid" id="tasks-grid">
+            <!-- Dynamic task cards -->
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 3: CODE IDE & TERMINAL
+             ========================================== -->
+        <section class="view-panel ide-view" id="view-ide">
+          <!-- Left File Explorer -->
+          <aside class="ide-file-tree">
+            <div class="ide-tree-header">
+              <span><i class="fas fa-folder-tree"></i> WORKSPACE</span>
+              <div class="ide-tree-actions">
+                <button class="ide-tree-btn" id="btn-ide-new-file" title="Create New File"><i class="fas fa-plus"></i></button>
+                <button class="ide-tree-btn" id="btn-ide-refresh" title="Refresh files"><i class="fas fa-sync-alt"></i></button>
+              </div>
+            </div>
+            <div class="ide-tree-list" id="ide-tree-list">
+              <!-- Files rendered dynamically -->
+            </div>
+          </aside>
+
+          <!-- Center Code Workspace -->
+          <div class="ide-workspace">
+            <div class="ide-editor-header">
+              <div class="ide-tabs">
+                <div class="ide-tab active">
+                  <i class="fas fa-file-code"></i>
+                  <span id="ide-current-filename">untitled.py</span>
+                </div>
+              </div>
+              <div class="ide-editor-actions">
+                <button class="ide-action-btn" id="btn-ide-save" title="Save file (Ctrl+S)"><i class="far fa-save"></i> Save</button>
+                <button class="ide-action-btn primary" id="btn-ide-run" title="Run code"><i class="fas fa-play"></i> Run</button>
+                <button class="ide-action-btn" id="btn-ide-send-chat" title="Send to Ciel chat"><i class="fas fa-comment"></i> Discuss with Ciel</button>
+              </div>
+            </div>
+            
+            <div class="ide-editor-body">
+              <textarea class="ide-code-textarea" id="ide-code-input" spellcheck="false" placeholder="# Write or open code here... (Ctrl+S to save)"></textarea>
+            </div>
+
+            <!-- Terminal Output Drawer -->
+            <div class="ide-terminal-panel">
+              <div class="terminal-header">
+                <span><i class="fas fa-terminal"></i> OUTPUT CONSOLE</span>
+                <button class="code-btn" id="btn-clear-term" style="font-size: 11px;">Clear</button>
+              </div>
+              <div class="terminal-output" id="ide-terminal-output">// Program execution output will appear here...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 4: PRIMITIVE GEOMETRIC ART STUDIO
+             ========================================== -->
+        <section class="view-panel primitive-view" id="view-primitive">
+          <div class="section-title-group">
+            <h2><i class="fas fa-shapes" style="color: #38bdf8;"></i> Geometric Primitive Art Studio</h2>
+            <p>High-performance vector art reconstruction engine inspired by Michael Fogleman's Primitive.</p>
+          </div>
+
+          <div class="primitive-workbench">
+            <!-- Control Card -->
+            <div class="primitive-control-card">
+              <!-- Upload Box -->
+              <input type="file" id="prim-file-input" accept="image/*" style="display: none;">
+              <div class="dropzone-box" id="prim-dropzone">
+                <div id="prim-drop-prompt">
+                  <div class="dropzone-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                  <div class="dropzone-text">Drag & drop image or click to browse</div>
+                  <div class="dropzone-sub">Supports PNG, JPG, WEBP</div>
+                </div>
+                <img id="prim-preview-thumb" src="" alt="Preview" style="display: none; max-width: 100%; max-height: 140px; border-radius: 8px; margin: 0 auto;">
+              </div>
+
+              <!-- Quick Presets -->
+              <div class="sample-presets-bar">
+                <span style="font-size: 11px; color: var(--text-muted); align-self: center;">Presets:</span>
+                <div class="preset-chip" data-path="/static/favicon.png">Ciel Mark</div>
+              </div>
+
+              <!-- Shape Mode Grid -->
+              <div class="shape-modes-grid">
+                <div class="mode-btn active" data-mode="combo"><i class="fas fa-cubes"></i><span>Combo</span></div>
+                <div class="mode-btn" data-mode="triangle"><i class="fas fa-play" style="transform: rotate(-90deg);"></i><span>Triangles</span></div>
+                <div class="mode-btn" data-mode="rectangle"><i class="far fa-square"></i><span>Rectangles</span></div>
+                <div class="mode-btn" data-mode="ellipse"><i class="far fa-circle" style="transform: scaleX(1.3);"></i><span>Ellipses</span></div>
+                <div class="mode-btn" data-mode="circle"><i class="far fa-circle"></i><span>Circles</span></div>
+                <div class="mode-btn" data-mode="rotated_rect"><i class="fas fa-vector-square"></i><span>Rotated</span></div>
+              </div>
+
+              <!-- Sliders -->
+              <div class="control-slider-group">
+                <div class="control-slider-header">
+                  <span>Number of Shapes</span>
+                  <span id="prim-shapes-val" style="color: var(--cyan); font-weight: 600;">50</span>
+                </div>
+                <input type="range" class="custom-range" id="prim-shapes-slider" min="10" max="250" value="50" step="5">
+              </div>
+
+              <div class="control-slider-group">
+                <div class="control-slider-header">
+                  <span>Opacity (Alpha)</span>
+                  <span id="prim-alpha-val" style="color: var(--cyan); font-weight: 600;">0.55</span>
+                </div>
+                <input type="range" class="custom-range" id="prim-alpha-slider" min="0.1" max="1.0" value="0.55" step="0.05">
+              </div>
+
+              <button class="btn-generate-prim" id="btn-gen-primitive">
+                <i class="fas fa-play"></i> Generate Geometric Art
+              </button>
+            </div>
+
+            <!-- Canvas Result Showcase -->
+            <div class="primitive-display-card">
+              <div class="prim-canvas-container">
+                <div class="prim-svg-render" id="prim-svg-display">
+                  <div class="text-muted" style="text-align: center;">
+                    <i class="fas fa-drafting-compass" style="font-size: 38px; color: var(--text-muted); margin-bottom: 12px;"></i>
+                    <p>Vector reproduction will render here in crisp SVG.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="prim-metrics-bar">
+                <span>Shapes Rendered: <strong id="prim-shape-count-metric" style="color: var(--cyan);">0</strong></span>
+                <span>Optimization Time: <strong id="prim-time-metric" style="color: var(--emerald);">0s</strong></span>
+                <span>Engine: <strong>Hill-Climbing MSE</strong></span>
+              </div>
+
+              <div class="prim-actions-bar" id="prim-actions-bar" style="display: none;">
+                <button class="ide-action-btn primary" id="btn-download-svg"><i class="fas fa-download"></i> Download SVG</button>
+                <button class="ide-action-btn" id="btn-download-png"><i class="fas fa-image"></i> Download PNG</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 5: DIFFUSION AI IMAGE STUDIO
+             ========================================== -->
+        <section class="view-panel diffusion-view" id="view-diffusion">
+          <div class="section-title-group">
+            <h2><i class="fas fa-wand-magic-sparkles" style="color: #a855f7;"></i> Anime & Diffusion Art Studio</h2>
+            <p>Layered Anime Generation Pipeline: Prompt Guidance ➔ Anime Fine-Tunes ➔ Denoising & Shading ➔ Real-ESRGAN HD Upscaler</p>
+          </div>
+
+          <!-- Pipeline Stages Ribbon -->
+          <div style="display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; font-size: 11px;">
+            <span class="hud-chip" style="color: var(--cyan); border-color: rgba(56,189,248,0.3); background: rgba(56,189,248,0.06); padding: 4px 10px;">
+              <i class="fas fa-terminal"></i> 1. Prompt & Negative Filter
+            </span>
+            <span class="hud-chip" style="color: #a855f7; border-color: rgba(168,85,247,0.3); background: rgba(168,85,247,0.06); padding: 4px 10px;">
+              <i class="fas fa-layer-group"></i> 2. Anime Checkpoint (Anything / Counterfeit / AOM)
+            </span>
+            <span class="hud-chip" style="color: var(--emerald); border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.06); padding: 4px 10px;">
+              <i class="fas fa-paint-brush"></i> 3. Composition & Cel-Shading
+            </span>
+            <span class="hud-chip" style="color: #ec4899; border-color: rgba(236,72,153,0.3); background: rgba(236,72,153,0.06); padding: 4px 10px;">
+              <i class="fas fa-gem"></i> 4. Real-ESRGAN 4× Polish
+            </span>
+          </div>
+
+          <div class="diffusion-workbench">
+            <div class="primitive-control-card">
+              <!-- Model Selection -->
+              <div class="diff-model-header">
+                <label style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">Anime Diffusion Model</label>
+                <span id="diff-model-badge" class="badge-ready">Ready Offline</span>
+              </div>
+              <select class="input-styled" id="diff-model-select">
+                <option value="counterfeit-v3">Counterfeit V2.5/V3 (Sharp Linework & Anime Art)</option>
+                <option value="anything-v5">Anything V5 (Versatile Anime Style)</option>
+                <option value="abyss-orange-mix">AbyssOrangeMix 2/3 (Fantasy Anime Blend)</option>
+                <option value="sdxl-turbo">SDXL Turbo (Fast Base Draft Generator)</option>
+              </select>
+
+              <!-- Resolution & Steps -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                  <label style="font-size: 12px; color: var(--text-secondary);">Resolution</label>
+                  <select class="input-styled" id="diff-res-select">
+                    <option value="512x768" selected>512 × 768 (Anime Portrait 2:3)</option>
+                    <option value="512x512">512 × 512 (Square 1:1)</option>
+                    <option value="768x512">768 × 512 (Landscape 3:2)</option>
+                    <option value="1024x1024">1024 × 1024 (HD 1:1)</option>
+                  </select>
+                </div>
+                <div>
+                  <div class="control-slider-header" style="margin-bottom: 4px;">
+                    <span>Steps</span>
+                    <span id="diff-steps-val" style="color: var(--cyan); font-weight: 600;">20</span>
+                  </div>
+                  <input type="range" class="custom-range" id="diff-steps-slider" min="1" max="40" value="20">
+                </div>
+              </div>
+
+              <!-- Prompt Input -->
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <label style="font-size: 12px; color: var(--text-secondary); margin: 0;">Prompt</label>
+                  <button type="button" id="btn-enhance-prompt" class="ide-action-btn" style="padding: 2px 8px; font-size: 11px; background: rgba(168,85,247,0.12); color: #c084fc; border: 1px solid rgba(168,85,247,0.3); border-radius: 4px; cursor: pointer;">
+                    <i class="fas fa-wand-magic-sparkles"></i> Copilot AI Enhance
+                  </button>
+                </div>
+                <textarea class="input-styled" id="diff-prompt" rows="3" placeholder="1girl, silver hair, glowing blue eyes, elegant magical robes, cinematic lighting, masterpiece, 8k..."></textarea>
+              </div>
+              
+              <!-- Negative Prompt -->
+              <div>
+                <label style="font-size: 12px; color: var(--text-secondary);">Negative Prompt</label>
+                <textarea class="input-styled" id="diff-neg-prompt" rows="2" placeholder="Blurry, low quality, bad anatomy, watermark">Blurry, low quality, bad anatomy, watermark</textarea>
+              </div>
+
+              <button class="btn-generate-prim" id="btn-gen-diffusion" style="background: linear-gradient(135deg, #7c3aed, #a855f7);">
+                <i class="fas fa-magic"></i> Generate Anime Art
+              </button>
+            </div>
+
+            <!-- Result Showcase -->
+            <div class="primitive-display-card">
+              <div class="prim-canvas-container" id="diff-result-container">
+                <div class="text-muted" style="text-align: center;">
+                  <i class="fas fa-image" style="font-size: 38px; color: var(--text-muted); margin-bottom: 12px;"></i>
+                  <p>Generated anime illustration will render here.</p>
+                </div>
+              </div>
+
+              <!-- Actions on Result -->
+              <div class="prim-actions-bar" id="diff-actions-bar" style="display: none; flex-wrap: wrap; gap: 8px;">
+                <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.06); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12);">
+                  <label style="font-size: 11px; color: var(--text-secondary); margin: 0;"><i class="fas fa-sliders-h"></i> Upscaler:</label>
+                  <select id="diff-upscaler-method" style="background: transparent; color: #fff; border: none; font-size: 11px; outline: none; cursor: pointer;">
+                    <option value="realesrgan" style="background: #1e1e2e;" selected>Real-ESRGAN Anime 4× (Crisp & Fast)</option>
+                    <option value="latent_diffusion" style="background: #1e1e2e;">Latent Diffusion (Anime Detail Resampler)</option>
+                  </select>
+                </div>
+                <button class="ide-action-btn primary" id="btn-upscale-diff" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #fff;">
+                  <i class="fas fa-wand-magic-sparkles"></i> Upscale Image
+                </button>
+                <button class="ide-action-btn" id="btn-download-diff"><i class="fas fa-download"></i> Download PNG</button>
+                <button class="ide-action-btn" id="btn-view-diff-fullscreen"><i class="fas fa-expand"></i> Fullscreen</button>
+                <button class="ide-action-btn" id="btn-diff-to-primitive"><i class="fas fa-shapes"></i> Vectorize in Primitive</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 6: MEMORY & KNOWLEDGE VAULT
+             ========================================== -->
+        <section class="view-panel memory-view" id="view-memory">
+          <div class="tasks-header">
+            <div class="section-title-group">
+              <h2><i class="fas fa-brain" style="color: #38bdf8;"></i> Knowledge Vault</h2>
+              <p>Persistent facts, preferences, and workspace knowledge remembered by Ciel.</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" class="input-styled" id="memory-add-input" placeholder="Teach Ciel a new fact or preference..." style="width: 320px;">
+              <button class="ide-action-btn primary" id="btn-add-memory"><i class="fas fa-plus"></i> Remember</button>
+              <button class="ide-action-btn" id="btn-clear-memories" style="color: var(--rose);" title="Clear all memories"><i class="fas fa-trash-alt"></i> Clear All</button>
+            </div>
+          </div>
+          <div class="memory-grid" id="memory-grid">
+            <!-- Dynamic memories -->
+          </div>
+        </section>
+
+        <!-- ==========================================
+             VIEW 7: SYSTEM HUD & SETTINGS
+             ========================================== -->
+        <section class="view-panel settings-view" id="view-settings">
+          <div class="section-title-group">
+            <h2><i class="fas fa-sliders-h" style="color: #38bdf8;"></i> System Architecture & Diagnostics</h2>
+            <p>Inspect local machine metrics, LLM configurations, and execution security.</p>
+          </div>
+
+          <div class="settings-grid">
+            <div class="settings-card">
+              <div class="card-title"><i class="fas fa-server"></i> Hardware Telemetry</div>
+              <div class="hud-gauge-row">
+                <span class="gauge-label">CPU Usage</span>
+                <span class="gauge-val" id="settings-cpu-val">0%</span>
+              </div>
+              <div class="hud-gauge-row">
+                <span class="gauge-label">RAM Usage</span>
+                <span class="gauge-val" id="settings-ram-val">0%</span>
+              </div>
+              <div class="hud-gauge-row">
+                <span class="gauge-label">Ciel Studio Version</span>
+                <span class="gauge-val" id="settings-version">5.4.0</span>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="card-title"><i class="fas fa-microchip"></i> Ollama AI Daemon</div>
+              <p style="font-size: 12px; color: var(--text-muted);">
+                Local Ollama service provides fast local inference for Qwen 2.5 Coder and Qwen 3 reasoning models.
+              </p>
+              <div style="display: flex; gap: 8px; margin-top: 10px;">
+                <button class="ide-action-btn primary" id="btn-start-ollama-settings">
+                  <i class="fas fa-play"></i> Start Ollama Daemon
+                </button>
+                <button class="ide-action-btn" id="btn-purge-models" title="Unload models from memory">
+                  <i class="fas fa-broom"></i> Free VRAM
+                </button>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="card-title"><i class="fas fa-shield-alt"></i> Security & Permissions</div>
+              <p style="font-size: 12px; color: var(--text-muted);">
+                Autonomous Agent tool safety filters are active. Risky file and system shell executions require interactive confirmation.
+              </p>
+              <button class="ide-action-btn" id="btn-reset-permissions" style="margin-top: 10px;">
+                <i class="fas fa-undo"></i> Reset Permission Scopes
+              </button>
+            </div>
+
+            <!-- JARVIS Authority & Tool Audit Trail -->
+            <div class="settings-card" style="grid-column: 1 / -1;">
+              <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <span><i class="fas fa-shield-virus" style="color: var(--cyan);"></i> Authority & Tool Execution Audit Trail</span>
+                <button class="ide-action-btn" id="btn-refresh-audit" style="font-size: 11px; padding: 2px 8px;"><i class="fas fa-sync-alt"></i> Refresh</button>
+              </div>
+              <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+                Inspired by the JARVIS Authority Engine. Transparent log of all actions executed on your workstation.
+              </p>
+              <div class="audit-log-container" id="audit-log-container" style="max-height: 220px; overflow-y: auto;">
+                <div style="color: var(--text-muted); font-size: 12px; padding: 12px; text-align: center;">No tool actions recorded in this session.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ==========================================
+       MODALS & FLOATING DIALOGS
+       ========================================== -->
+  
+  <!-- Interactive Permission Request Dialog -->
+  <div class="modal-overlay" id="perm-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fas fa-exclamation-triangle" style="color: var(--amber);"></i>
+          <span>Security Authorization Request</span>
+        </div>
+        <span class="perm-risk-badge high">Action Required</span>
+      </div>
+      <div>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
+          Ciel Autonomous Agent is requesting authorization to execute:
+        </p>
+        <div class="perm-target-box" id="perm-tool-name">run_command</div>
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;" id="perm-details-text">
+          Details...
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="ide-action-btn" id="perm-btn-deny" style="color: var(--rose);"><i class="fas fa-ban"></i> Deny</button>
+        <button class="ide-action-btn" id="perm-btn-allow-once"><i class="fas fa-check"></i> Allow Once</button>
+        <button class="ide-action-btn primary" id="perm-btn-allow-session"><i class="fas fa-lock-open"></i> Allow for Session</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Voice Listening Waveform Modal -->
+  <div class="modal-overlay" id="voice-modal">
+    <div class="voice-wave-modal">
+      <div style="font-size: 16px; font-weight: 700; color: #fff;">Listening to Your Voice...</div>
+      <div class="wave-bars-container">
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+      </div>
+      <p style="font-size: 12px; color: var(--cyan);">Speak naturally. Recording stops automatically when you pause.</p>
+    </div>
+  </div>
+
+  <!-- Chat History Modal -->
+  <div class="modal-overlay" id="history-modal">
+    <div class="modal-card" style="max-width: 600px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fas fa-history" style="color: var(--cyan);"></i>
+          <span>Conversation History</span>
+        </div>
+        <button class="modal-close-btn" id="btn-close-history"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="history-list" id="history-list-container">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Thinking Orb State Picker Popover (Libraries.dev & thinking-orbs) -->
+  <div class="modal-overlay" id="orb-picker-modal">
+    <div class="modal-card orb-picker-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fas fa-brain" style="color: var(--cyan);"></i>
+          <span>Living Core · Thinking Orb Cognitive States</span>
+        </div>
+        <button class="modal-close-btn" id="btn-close-orb-picker"><i class="fas fa-times"></i></button>
+      </div>
+      <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px;">
+        Pure 2D mathematical particle core inspired by Jakub Antalik. Select any active cognitive state or let Ciel automatically morph her core dynamically during autonomous execution.
+      </p>
+      <div class="orb-picker-grid" id="orb-picker-grid"></div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Image Modal -->
+  <div class="modal-overlay" id="image-modal">
+    <div style="position: relative; max-width: 90vw; max-height: 90vh;">
+      <div style="position: absolute; top: -45px; right: 0; display: flex; gap: 8px; z-index: 10;">
+        <button class="ide-action-btn primary" id="btn-download-modal" style="padding: 6px 14px; font-size: 13px;">
+          <i class="fas fa-download"></i> Download
+        </button>
+        <button class="btn-icon-square" id="btn-close-img-modal" style="background: rgba(0,0,0,0.8); color: #fff;">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <img id="image-modal-src" src="" alt="Fullscreen Preview" style="max-width: 100%; max-height: 85vh; border-radius: 12px; box-shadow: 0 0 30px rgba(0,0,0,0.9);">
+    </div>
+  </div>
+
+  <!-- Toast Notification Stack -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Thinking Orbs 2D Particle Engine (Jakub Antalik) -->
+  <script src="/static/js/thinking-orbs.js?v={{ version }}"></script>
+  <!-- Application Script -->
+  <script src="/static/js/ciel.js?v={{ version }}"></script>
+  <style>
+    .composer-icon-btn.recording {
+      color: #fff !important;
+      background: var(--rose) !important;
+      animation: pulseRec 1s infinite;
+    }
+  </style>
+</body>
+</html>

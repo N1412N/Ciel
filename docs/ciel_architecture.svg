@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" width="1200" height="680" style="background:#0f172a; font-family:'Segoe UI', Inter, -apple-system, sans-serif;">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="coreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#818cf8"/>
+    </linearGradient>
+    <linearGradient id="toolGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="voiceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f472b6"/>
+      <stop offset="100%" stop-color="#db2777"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#64748b" />
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#38bdf8" />
+    </marker>
+  </defs>
+
+  <!-- Title Banner -->
+  <rect x="40" y="25" width="1120" height="70" rx="12" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+  <text x="65" y="62" fill="#f8fafc" font-size="22" font-weight="700" letter-spacing="0.5">MANAS CIEL — SYSTEM ARCHITECTURE</text>
+  <rect x="880" y="42" width="250" height="34" rx="17" fill="#0369a1" fill-opacity="0.3" stroke="#38bdf8" stroke-width="1"/>
+  <text x="1005" y="64" fill="#38bdf8" font-size="13" font-weight="600" text-anchor="middle">Local &amp; Hybrid AI Desktop Assistant</text>
+
+  <!-- COLUMN 1: USER INPUT & PERCEPTION -->
+  <!-- User Input Box -->
+  <rect x="40" y="130" width="220" height="210" rx="14" fill="url(#cardGrad)" stroke="#38bdf8" stroke-width="1.5"/>
+  <rect x="40" y="130" width="220" height="38" rx="14" fill="#38bdf8" fill-opacity="0.15"/>
+  <text x="150" y="155" fill="#38bdf8" font-size="14" font-weight="700" text-anchor="middle">1. USER INTERACTION</text>
+  
+  <rect x="60" y="185" width="180" height="60" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <text x="150" y="210" fill="#f1f5f9" font-size="13" font-weight="600" text-anchor="middle">🎤 Voice Input</text>
+  <text x="150" y="230" fill="#94a3b8" font-size="11" text-anchor="middle">"Hey Ciel" Wake Word</text>
+
+  <rect x="60" y="260" width="180" height="60" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <text x="150" y="285" fill="#f1f5f9" font-size="13" font-weight="600" text-anchor="middle">⌨️ Text / Chat UI</text>
+  <text x="150" y="305" fill="#94a3b8" font-size="11" text-anchor="middle">Commands &amp; Prompts</text>
+
+  <!-- Speech Perception Engine -->
+  <rect x="40" y="380" width="220" height="150" rx="14" fill="url(#cardGrad)" stroke="#818cf8" stroke-width="1.5"/>
+  <rect x="40" y="380" width="220" height="38" rx="14" fill="#818cf8" fill-opacity="0.15"/>
+  <text x="150" y="405" fill="#a5b4fc" font-size="14" font-weight="700" text-anchor="middle">2. SPEECH PERCEPTION</text>
+  
+  <text x="150" y="445" fill="#f8fafc" font-size="15" font-weight="700" text-anchor="middle">Faster-Whisper</text>
+  <text x="150" y="468" fill="#94a3b8" font-size="12" text-anchor="middle">Speech-to-Text (STT)</text>
+  <rect x="65" y="485" width="170" height="26" rx="6" fill="#4338ca" fill-opacity="0.4"/>
+  <text x="150" y="502" fill="#c7d2fe" font-size="11" font-weight="600" text-anchor="middle">100% Local Inference</text>
+
+  <!-- Arrow: Voice to Whisper -->
+  <path d="M 150 245 L 150 375" stroke="#818cf8" stroke-width="2" stroke-dasharray="4" marker-end="url(#arrow-blue)"/>
+
+  <!-- Arrow: Input & Whisper to Core Intelligence -->
+  <path d="M 260 290 L 340 290" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <path d="M 260 455 L 300 455 L 300 330 L 340 330" stroke="#818cf8" stroke-width="2" marker-end="url(#arrow-blue)"/>
+
+  <!-- COLUMN 2: CENTRAL INTELLIGENCE CORE -->
+  <rect x="350" y="130" width="300" height="400" rx="16" fill="url(#cardGrad)" stroke="url(#coreGrad)" stroke-width="2"/>
+  <rect x="350" y="130" width="300" height="42" rx="16" fill="url(#coreGrad)" fill-opacity="0.2"/>
+  <text x="500" y="157" fill="#38bdf8" font-size="15" font-weight="700" text-anchor="middle">3. CENTRAL INTELLIGENCE</text>
+
+  <rect x="375" y="190" width="250" height="110" rx="12" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+  <text x="500" y="218" fill="#38bdf8" font-size="12" font-weight="700" text-anchor="middle">REASONING &amp; LOGIC CORE</text>
+  <text x="500" y="246" fill="#ffffff" font-size="17" font-weight="800" text-anchor="middle">Qwen2.5-Coder / Qwen3</text>
+  <text x="500" y="272" fill="#94a3b8" font-size="12" text-anchor="middle">Hosted locally via Ollama</text>
+
+  <!-- Router Box -->
+  <rect x="375" y="325" width="250" height="85" rx="10" fill="#0f172a" stroke="#64748b" stroke-width="1"/>
+  <text x="500" y="352" fill="#e2e8f0" font-size="13" font-weight="700" text-anchor="middle">Intent &amp; Tool Router</text>
+  <text x="500" y="375" fill="#94a3b8" font-size="11" text-anchor="middle">Natural Language Understanding</text>
+  <text x="500" y="393" fill="#64748b" font-size="10" text-anchor="middle">Decides: Direct Chat vs. Tool Call</text>
+
+  <!-- Memory Box -->
+  <rect x="375" y="430" width="250" height="75" rx="10" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <text x="500" y="455" fill="#cbd5e1" font-size="12" font-weight="600" text-anchor="middle">🧠 Persistent Memory</text>
+  <text x="500" y="475" fill="#64748b" font-size="11" text-anchor="middle">`memory.json` &amp; Session History</text>
+
+  <!-- Arrow Core to Tools -->
+  <path d="M 650 365 L 720 365" stroke="#34d399" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- COLUMN 3: PYTHON TOOL EXECUTION LAYER -->
+  <rect x="730" y="130" width="430" height="400" rx="16" fill="url(#cardGrad)" stroke="#34d399" stroke-width="1.5"/>
+  <rect x="730" y="130" width="430" height="42" rx="16" fill="#34d399" fill-opacity="0.15"/>
+  <text x="945" y="157" fill="#34d399" font-size="15" font-weight="700" text-anchor="middle">4. TOOL EXECUTION &amp; AUTOMATION (Python)</text>
+
+  <!-- Tool 1: Image Generation -->
+  <rect x="755" y="190" width="185" height="100" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="847" y="215" fill="#f472b6" font-size="13" font-weight="700" text-anchor="middle">🎨 AI Image Synthesis</text>
+  <text x="847" y="238" fill="#f1f5f9" font-size="12" font-weight="600" text-anchor="middle">Counterfeit V3</text>
+  <text x="847" y="258" fill="#94a3b8" font-size="10" text-anchor="middle">Stable Diffusion Model</text>
+  <text x="847" y="274" fill="#64748b" font-size="10" text-anchor="middle">Generates anime &amp; digital art</text>
+
+  <!-- Tool 2: Presentation Deck -->
+  <rect x="955" y="190" width="185" height="100" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="1047" y="215" fill="#fbbf24" font-size="13" font-weight="700" text-anchor="middle">📊 Presentation Creator</text>
+  <text x="1047" y="238" fill="#f1f5f9" font-size="12" font-weight="600" text-anchor="middle">PowerPoint Automation</text>
+  <text x="1047" y="258" fill="#94a3b8" font-size="10" text-anchor="middle">Creates 5-slide .pptx decks</text>
+  <text x="1047" y="274" fill="#64748b" font-size="10" text-anchor="middle">Titles, bullets &amp; notes</text>
+
+  <!-- Tool 3: Desktop & System Control -->
+  <rect x="755" y="305" width="185" height="100" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="847" y="330" fill="#38bdf8" font-size="13" font-weight="700" text-anchor="middle">🖥️ Desktop &amp; Apps</text>
+  <text x="847" y="352" fill="#f1f5f9" font-size="12" font-weight="600" text-anchor="middle">App Launcher &amp; Volume</text>
+  <text x="847" y="372" fill="#94a3b8" font-size="10" text-anchor="middle">Launches VS Code, Brave, etc.</text>
+  <text x="847" y="388" fill="#64748b" font-size="10" text-anchor="middle">Controls system volume</text>
+
+  <!-- Tool 4: Paint & Mouse Control -->
+  <rect x="955" y="305" width="185" height="100" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="1047" y="330" fill="#a78bfa" font-size="13" font-weight="700" text-anchor="middle">🖌️ Autonomous Drawing</text>
+  <text x="1047" y="352" fill="#f1f5f9" font-size="12" font-weight="600" text-anchor="middle">MS Paint Mouse Control</text>
+  <text x="1047" y="372" fill="#94a3b8" font-size="10" text-anchor="middle">Controls cursor coordinates</text>
+  <text x="1047" y="388" fill="#64748b" font-size="10" text-anchor="middle">Draws sketches live on screen</text>
+
+  <!-- Tool 5: Voice Output Feedback (Edge TTS) -->
+  <rect x="755" y="420" width="385" height="85" rx="10" fill="#1e293b" stroke="#f472b6" stroke-width="1.5"/>
+  <text x="947" y="445" fill="#f472b6" font-size="13" font-weight="700" text-anchor="middle">🔊 5. VOICE RESPONSE ENGINE (Edge TTS)</text>
+  <text x="947" y="468" fill="#f1f5f9" font-size="12" text-anchor="middle">Natural Spoken Voice Output: "en-US-AriaNeural"</text>
+  <text x="947" y="488" fill="#94a3b8" font-size="11" text-anchor="middle">Answers Master with clear, human-like voice synthesis</text>
+
+  <!-- Bottom Footer Info -->
+  <rect x="40" y="555" width="1120" height="95" rx="12" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="65" y="585" fill="#38bdf8" font-size="13" font-weight="700">TECHNICAL STACK SUMMARY</text>
+  <text x="65" y="608" fill="#cbd5e1" font-size="12">• Backend: Python (Flask) with 35+ custom tools and security permission manager</text>
+  <text x="65" y="628" fill="#cbd5e1" font-size="12">• Local AI: Ollama (Qwen2.5-Coder / Qwen3) + Faster-Whisper (speech-to-text) + Counterfeit V3 (Stable Diffusion)</text>
+  
+  <text x="820" y="595" fill="#94a3b8" font-size="11" text-anchor="start">SYSTEM ARCHITECTURE</text>
+  <text x="820" y="618" fill="#f8fafc" font-size="14" font-weight="700" text-anchor="start">Manas Ciel OS Core</text>
+  <text x="820" y="635" fill="#38bdf8" font-size="11" text-anchor="start">100% Local &amp; Autonomous</text>
+</svg>

@@ -1,0 +1,55 @@
+﻿# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Large Model Weights and AI Checkpoints (~46 GB local cache)
+models/
+*.pth
+*.pt
+*.bin
+*.onnx
+*.safetensors
+*.gguf
+
+# Standalone cloned external repositories
+openjarvis/
+
+# Ephemeral user runtime chats & session logs
+chats/*.json
+chats/*.bak
+chats/primitive_run_test/
+chats/primitive_test/
+desktop_run.log
+
+# Temporary / Generated runtime artwork
+app/static/images/dummy_*
+app/static/images/prim_*
+app/static/images/upload_*
+app/static/images/upscaled_*
+app/static/generated/
+
+# Backup and temp files
+*.bak
+*.bak2
+*.backup
+*.tmp
+ciel_backend.zip
+
+# Work and local IDE configuration
+.work/
+.idea/
+.vscode/
+*.suo
+*.user
+
+# Environment variables & secrets
+.env
+.env.local
+*.secret
