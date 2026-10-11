@@ -623,6 +623,39 @@
     </div>
   </div>
 
+  <!-- Voice Command Confirmation Modal -->
+  <div class="modal-overlay" id="command-confirm-modal" style="z-index: 105;">
+    <div class="modal-card" style="max-width: 520px; border-color: rgba(56, 189, 248, 0.4); box-shadow: 0 0 35px rgba(56, 189, 248, 0.25);">
+      <div class="modal-header">
+        <div class="modal-title" style="gap: 10px; font-size: 16px;">
+          <i class="fas fa-shield-halved" style="color: var(--cyan);"></i>
+          <span>Voice Directive Confirmation</span>
+        </div>
+        <span class="perm-risk-badge low" id="confirm-badge" style="background: rgba(56, 189, 248, 0.2); color: var(--cyan); border: 1px solid rgba(56, 189, 248, 0.3);">Awaiting Confirmation</span>
+      </div>
+      <div>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 10px;">
+          Did you say this command, Master?
+        </p>
+        <div class="perm-target-box" id="confirm-command-text" style="font-size: 16px; font-weight: 600; color: #fff; padding: 14px 18px; word-break: break-word; background: rgba(12, 18, 36, 0.85); border: 1px solid rgba(56, 189, 248, 0.45); border-radius: 10px; text-shadow: 0 0 8px rgba(56, 189, 248, 0.5);">
+          --
+        </div>
+        <p style="font-size: 12px; color: var(--cyan); margin-top: 10px; display: flex; align-items: center; gap: 8px;" id="confirm-status-subtext">
+          <i class="fas fa-microphone-lines" style="animation: pulseRec 1.2s infinite;"></i>
+          <span>Listening for "Yes" to execute, or "No" if incorrect...</span>
+        </p>
+      </div>
+      <div class="modal-footer" style="justify-content: flex-end; gap: 12px; margin-top: 8px;">
+        <button class="ide-action-btn" id="confirm-btn-wrong" style="color: var(--rose); border-color: rgba(244, 63, 94, 0.45); padding: 8px 16px;">
+          <i class="fas fa-times"></i> Wrong Command (No)
+        </button>
+        <button class="ide-action-btn primary" id="confirm-btn-yes" style="padding: 8px 18px;">
+          <i class="fas fa-check"></i> Confirm & Execute (Yes)
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Voice Listening Waveform Modal -->
   <div class="modal-overlay" id="voice-modal">
     <div class="voice-wave-modal">

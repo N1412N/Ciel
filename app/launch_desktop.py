@@ -63,6 +63,33 @@ def start_ollama():
             )
             time.sleep(2)
 
+# ── 64-bit Safe Win32 ctypes signatures ──
+user32 = ctypes.windll.user32
+WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.wintypes.BOOL, ctypes.wintypes.HWND, ctypes.wintypes.LPARAM)
+user32.EnumWindows.argtypes = [WNDENUMPROC, ctypes.wintypes.LPARAM]
+user32.EnumWindows.restype = ctypes.wintypes.BOOL
+
+user32.LoadImageW.restype = ctypes.wintypes.HANDLE
+user32.LoadImageW.argtypes = [
+    ctypes.wintypes.HINSTANCE,
+    ctypes.c_wchar_p,
+    ctypes.wintypes.UINT,
+    ctypes.c_int,
+    ctypes.c_int,
+    ctypes.wintypes.UINT
+]
+
+user32.SendMessageW.restype = ctypes.c_ssize_t
+user32.SendMessageW.argtypes = [
+    ctypes.wintypes.HWND,
+    ctypes.wintypes.UINT,
+    ctypes.wintypes.WPARAM,
+    ctypes.wintypes.LPARAM
+]
+
+user32.GetAncestor.restype = ctypes.wintypes.HWND
+user32.GetAncestor.argtypes = [ctypes.wintypes.HWND, ctypes.wintypes.UINT]
+
 def attach_window_icon():
     """Find the Ciel window and apply the custom icon to titlebar & taskbar."""
     if not os.path.exists(ICON_PATH):
@@ -75,31 +102,32 @@ def attach_window_icon():
     ICON_BIG = 1
     GA_ROOT = 2
 
-    hicon_big = ctypes.windll.user32.LoadImageW(0, ICON_PATH, IMAGE_ICON, 32, 32, LR_LOADFROMFILE)
-    hicon_small = ctypes.windll.user32.LoadImageW(0, ICON_PATH, IMAGE_ICON, 16, 16, LR_LOADFROMFILE)
+    try:
+        hicon_big = user32.LoadImageW(0, ICON_PATH, IMAGE_ICON, 32, 32, LR_LOADFROMFILE)
+        hicon_small = user32.LoadImageW(0, ICON_PATH, IMAGE_ICON, 16, 16, LR_LOADFROMFILE)
 
-    WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.wintypes.HWND, ctypes.wintypes.LPARAM)
+        def enum_windows_callback(hwnd, lparam):
+            length = user32.GetWindowTextLengthW(hwnd)
+            if length > 0:
+                buff = ctypes.create_unicode_buffer(length + 1)
+                user32.GetWindowTextW(hwnd, buff, length + 1)
+                if "Ciel" in buff.value:
+                    root_hwnd = user32.GetAncestor(hwnd, GA_ROOT) or hwnd
+                    if hicon_small:
+                        user32.SendMessageW(root_hwnd, WM_SETICON, ICON_SMALL, hicon_small)
+                        user32.SendMessageW(hwnd, WM_SETICON, ICON_SMALL, hicon_small)
+                    if hicon_big:
+                        user32.SendMessageW(root_hwnd, WM_SETICON, ICON_BIG, hicon_big)
+                        user32.SendMessageW(hwnd, WM_SETICON, ICON_BIG, hicon_big)
+            return True
 
-    def enum_windows_callback(hwnd, lparam):
-        length = ctypes.windll.user32.GetWindowTextLengthW(hwnd)
-        if length > 0:
-            buff = ctypes.create_unicode_buffer(length + 1)
-            ctypes.windll.user32.GetWindowTextW(hwnd, buff, length + 1)
-            if "Ciel" in buff.value:
-                root_hwnd = ctypes.windll.user32.GetAncestor(hwnd, GA_ROOT) or hwnd
-                if hicon_small:
-                    ctypes.windll.user32.SendMessageW(root_hwnd, WM_SETICON, ICON_SMALL, hicon_small)
-                    ctypes.windll.user32.SendMessageW(hwnd, WM_SETICON, ICON_SMALL, hicon_small)
-                if hicon_big:
-                    ctypes.windll.user32.SendMessageW(root_hwnd, WM_SETICON, ICON_BIG, hicon_big)
-                    ctypes.windll.user32.SendMessageW(hwnd, WM_SETICON, ICON_BIG, hicon_big)
-        return True
+        cb = WNDENUMPROC(enum_windows_callback)
 
-    cb = WNDENUMPROC(enum_windows_callback)
-
-    for _ in range(30):
-        time.sleep(0.3)
-        ctypes.windll.user32.EnumWindows(cb, 0)
+        for _ in range(30):
+            time.sleep(0.3)
+            user32.EnumWindows(cb, 0)
+    except Exception as e:
+        pass
 
 # ── Global Application Handles ──
 window = None
@@ -107,7 +135,16 @@ tray_icon = None
 force_exit = False
 SW_HIDE = 0
 SW_NORMAL = 1
+SW_SHOWMINIMIZED = 2
+SW_MAXIMIZE = 3
+SW_SHOW = 5
 SW_RESTORE = 9
+
+user32.IsIconic.restype = ctypes.wintypes.BOOL
+user32.IsIconic.argtypes = [ctypes.wintypes.HWND]
+
+user32.IsZoomed.restype = ctypes.wintypes.BOOL
+user32.IsZoomed.argtypes = [ctypes.wintypes.HWND]
 RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
 
 def is_startup_enabled():
@@ -153,8 +190,8 @@ def get_ciel_hwnd():
                 ciel_hwnd[0] = root
                 return False
         return True
-    WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.wintypes.HWND, ctypes.wintypes.LPARAM)
-    ctypes.windll.user32.EnumWindows(WNDENUMPROC(enum_cb), 0)
+    cb = WNDENUMPROC(enum_cb)
+    user32.EnumWindows(cb, 0)
     return ciel_hwnd[0]
 
 def is_window_visible(hwnd=None):
@@ -169,20 +206,32 @@ def show_ciel_window():
     if window:
         try:
             window.show()
-            window.restore()
         except Exception:
             pass
     hwnd = get_ciel_hwnd()
     if hwnd:
-        ctypes.windll.user32.ShowWindow(hwnd, SW_RESTORE)
-        ctypes.windll.user32.SetForegroundWindow(hwnd)
+        try:
+            is_minimized = bool(user32.IsIconic(hwnd))
+            is_maximized = bool(user32.IsZoomed(hwnd))
+            if is_minimized:
+                # Restore minimized window preserving maximized state
+                if is_maximized:
+                    user32.ShowWindow(hwnd, SW_MAXIMIZE)
+                else:
+                    user32.ShowWindow(hwnd, SW_RESTORE)
+            else:
+                # Window already open (maximized or normal) — keep exact dimensions!
+                user32.ShowWindow(hwnd, SW_SHOW)
+            user32.SetForegroundWindow(hwnd)
+        except Exception:
+            pass
     attach_window_icon()
 
 def hide_ciel_window():
     global window
     hwnd = get_ciel_hwnd()
     if hwnd:
-        ctypes.windll.user32.ShowWindow(hwnd, SW_HIDE)
+        user32.ShowWindow(hwnd, SW_HIDE)
     elif window:
         try:
             window.hide()
@@ -191,7 +240,7 @@ def hide_ciel_window():
 
 def toggle_ciel_window():
     hwnd = get_ciel_hwnd()
-    if hwnd and is_window_visible(hwnd):
+    if hwnd and is_window_visible(hwnd) and not user32.IsIconic(hwnd):
         hide_ciel_window()
     else:
         show_ciel_window()

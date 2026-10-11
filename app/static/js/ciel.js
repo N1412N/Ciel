@@ -658,8 +658,8 @@
       // Format code blocks
       enhanceCodeBlocks(cielRow);
 
-      // Auto speak if TTS is toggled on
-      if (state.ttsEnabled && cielMsg.content) {
+      // Auto speak if TTS is toggled on OR talk toggle is active
+      if ((state.ttsEnabled || state.wakeActive) && cielMsg.content) {
         speakText(cielMsg.content);
       }
 
@@ -799,21 +799,28 @@
   }
 
   // --- TTS & AUDIO SPEECH ---
-  async function speakText(text) {
-    if (!text || !state.ttsEnabled) return;
+  async function speakText(text, force = false) {
+    if (!text || (!force && !state.ttsEnabled && !state.wakeActive)) return;
     try {
       if (state.currentAudio) {
         try { state.currentAudio.pause(); } catch(e) {}
         state.currentAudio = null;
       }
-      const cleanText = text.replace(/```[\s\S]*?```/g, '').replace(/[#*`_~]/g, '').slice(0, 300);
+      const cleanText = text
+        .replace(/```[\s\S]*?```/g, ' [code block] ')
+        .replace(/[#*`_~><]/g, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 350);
+      if (!cleanText) return;
       const res = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: cleanText })
       });
       const data = await res.json();
-      if (data.status === 'success' && data.audio_url && state.ttsEnabled) {
+      if (data.status === 'success' && data.audio_url && (force || state.ttsEnabled || state.wakeActive)) {
         const audio = new Audio(data.audio_url);
         state.currentAudio = audio;
         audio.onended = () => { if (state.currentAudio === audio) state.currentAudio = null; };
@@ -841,6 +848,128 @@
     }
     showToast(state.ttsEnabled ? 'Voice Responses ON' : 'Voice Responses Muted', 'info');
   }
+
+
+  // =========================================================================
+  // VOICE COMMAND CONFIRMATION FLOW
+  // =========================================================================
+  let pendingConfirmationCommand = null;
+  let isConfirmingCommand = false;
+  let confirmListenAbort = null;
+
+  function closeConfirmationModal() {
+    isConfirmingCommand = false;
+    if (confirmListenAbort) {
+      try { confirmListenAbort.abort(); } catch(e) {}
+      confirmListenAbort = null;
+    }
+    const modal = $('command-confirm-modal');
+    if (modal) modal.classList.remove('active');
+  }
+
+  function promptCommandConfirmation(command) {
+    if (!command || !command.trim()) return;
+    const cleanCmd = command.trim();
+    pendingConfirmationCommand = cleanCmd;
+    isConfirmingCommand = true;
+
+    const modal = $('command-confirm-modal');
+    const textEl = $('confirm-command-text');
+    const subText = $('confirm-status-subtext');
+    if (textEl) textEl.textContent = `"${cleanCmd}"`;
+    if (subText) subText.innerHTML = '<i class="fas fa-microphone-lines" style="animation: pulseRec 1.2s infinite;"></i> <span>Listening for "Yes" to execute, or "No" if incorrect...</span>';
+    if (modal) modal.classList.add('active');
+
+    // Ciel verbally asks to confirm
+    speakText(`Did you say: "${cleanCmd}"? Please confirm: say yes to execute, or say no if incorrect.`, true);
+
+    // Automatically listen for confirmation answer after question finishes
+    setTimeout(() => {
+      if (isConfirmingCommand) {
+        listenForConfirmationAnswer();
+      }
+    }, 2800);
+  }
+
+  async function listenForConfirmationAnswer() {
+    if (!isConfirmingCommand) return;
+    confirmListenAbort = new AbortController();
+
+    try {
+      const res = await fetch('/api/voice/listen_once', { 
+        method: 'POST',
+        signal: confirmListenAbort.signal 
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!isConfirmingCommand) return;
+
+      const answer = (data.transcript || '').toLowerCase().trim();
+      const subText = $('confirm-status-subtext');
+
+      if (!answer) {
+        if (subText) subText.innerHTML = '<span>No response heard. Please say "Yes" or "No", or click below.</span>';
+        return;
+      }
+
+      const positiveWords = ['yes', 'yeah', 'yep', 'correct', 'confirm', 'do it', 'right', 'sure', 'proceed', 'go ahead', 'okay', 'ok', 'execute', 'yup', 'aye'];
+      const negativeWords = ['no', 'nope', 'wrong', 'not right', 'incorrect', 'cancel', 'stop', 'negative', 'false', 'nah', 'not that'];
+
+      const isPositive = positiveWords.some(w => answer.includes(w));
+      const isNegative = negativeWords.some(w => answer.includes(w));
+
+      if (isPositive && !isNegative) {
+        handleConfirmedCommand();
+      } else if (isNegative) {
+        handleRejectedCommand();
+      } else {
+        if (subText) subText.innerHTML = `<span>Heard "${answer}". Please say "Yes" to execute or "No" to re-prompt.</span>`;
+        speakText(`I heard "${answer}". Is that a yes or a no, Master?`, true);
+        setTimeout(() => {
+          if (isConfirmingCommand) listenForConfirmationAnswer();
+        }, 2200);
+      }
+    } catch (e) {
+      if (e.name !== 'AbortError') console.warn('Confirmation listen error:', e);
+    }
+  }
+
+  function handleConfirmedCommand() {
+    const cmd = pendingConfirmationCommand;
+    closeConfirmationModal();
+    if (cmd) {
+      speakText('Confirmed. Executing now, Master.', true);
+      $('chat-input').value = cmd;
+      sendChatMessage();
+      showToast(`Executing confirmed command: "${cmd}"`, 'success');
+    }
+  }
+
+  function handleRejectedCommand() {
+    closeConfirmationModal();
+    speakText('Understood. What is the correct command, Master?', true);
+    showToast('Command cancelled. Please speak the correct command...', 'info');
+
+    // Wait for question to finish speaking, then open mic to capture the correct command
+    setTimeout(async () => {
+      try {
+        const res = await fetch('/api/voice/listen_once', { method: 'POST' });
+        if (res.ok) {
+          const data = await res.json();
+          const newCmd = (data.transcript || '').trim();
+          if (newCmd && newCmd.length >= 2) {
+            promptCommandConfirmation(newCmd);
+          } else {
+            showToast('No speech detected', 'info');
+            speakText('I did not catch that, Master. Whenever you are ready, please ask again.', true);
+          }
+        }
+      } catch (e) {
+        console.warn('Re-listen error:', e);
+      }
+    }, 2600);
+  }
+
 
   // --- VOICE CAPTURE (MIC) WITH VOICE GLOW ---
   let listenAbortController = null;
@@ -892,9 +1021,11 @@
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const data = await res.json();
       if (data.status === 'success' && data.transcript) {
-        $('chat-input').value = data.transcript;
+        const spoken = data.transcript.trim();
+        $('chat-input').value = spoken;
         $('chat-input').focus();
-        showToast(`Heard: "${data.transcript}"`, 'success');
+        showToast(`Heard: "${spoken}"`, 'success');
+        promptCommandConfirmation(spoken);
       } else {
         showToast('No speech detected', 'info');
       }
@@ -972,14 +1103,16 @@
       }
 
       if (state.wakeActive && data.status === 'event' && data.event) {
-        fetch('/api/system/summon', { method: 'POST' }).catch(() => {});
+        if (document.hidden || !document.hasFocus()) {
+          fetch('/api/system/summon', { method: 'POST' }).catch(() => {});
+        }
         const directive = (data.event.directive || '').trim();
         if (directive && directive.length >= 2) {
-          $('chat-input').value = directive;
-          sendChatMessage();
           showToast(`Wake directive: "${directive}"`, 'info');
+          promptCommandConfirmation(directive);
         } else {
           showToast('Wake word detected — listening...', 'info');
+          speakText('Yes, Master? I am listening.', true);
           triggerVoiceInput();
         }
       }
@@ -993,6 +1126,15 @@
     // 1. Instant optimistic UI feedback — 0ms immediate response on every click
     updateWakeUI(target);
     localStorage.setItem('ciel_wake_enabled', target ? 'true' : 'false');
+    if (target) {
+      state.ttsEnabled = true;
+      localStorage.setItem('ciel_tts_enabled', 'true');
+      const ttsBtn = $('btn-toggle-tts');
+      if (ttsBtn) ttsBtn.classList.add('active');
+      speakText('Voice conversation active. I am listening, Master.', true);
+    } else {
+      speakText('Voice paused.', true);
+    }
     showToast(target ? 'Wake word "Hey Ciel" Active' : 'Wake word paused', target ? 'success' : 'info');
 
     // 2. Manage polling timer immediately
@@ -1855,7 +1997,9 @@
     });
 
     // Topbar Voice Controls
-    $('btn-mic').addEventListener('click', triggerVoiceInput);
+        $('btn-mic').addEventListener('click', triggerVoiceInput);
+    if ($('confirm-btn-yes')) $('confirm-btn-yes').addEventListener('click', handleConfirmedCommand);
+    if ($('confirm-btn-wrong')) $('confirm-btn-wrong').addEventListener('click', handleRejectedCommand);
     $('btn-toggle-wake').addEventListener('click', toggleWakeWord);
     $('btn-toggle-tts').addEventListener('click', toggleTts);
 
