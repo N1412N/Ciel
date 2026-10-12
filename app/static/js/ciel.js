@@ -1563,16 +1563,36 @@
   }
 
   function setupDiffusionStudio() {
-    $('diff-model-select').addEventListener('change', (e) => {
-      updateSelectedDiffusionModel(e.target.value);
-    });
+    if ($('diff-model-select')) {
+      $('diff-model-select').addEventListener('change', (e) => {
+        updateSelectedDiffusionModel(e.target.value);
+      });
+    }
 
-    $('diff-steps-slider').addEventListener('input', (e) => {
-      $('diff-steps-val').textContent = e.target.value;
-    });
+    if ($('diff-steps-slider')) {
+      $('diff-steps-slider').addEventListener('input', (e) => {
+        if ($('diff-steps-val')) $('diff-steps-val').textContent = e.target.value;
+      });
+    }
 
+    // Dynamic Upscaler Button label and icon
+    const upscalerMethodSel = $('diff-upscaler-method');
+    const updateUpscaleBtnLabel = () => {
+      const upBtn = $('btn-upscale-diff');
+      if (!upBtn) return;
+      const method = upscalerMethodSel ? upscalerMethodSel.value : 'realesrgan';
+      if (method === 'latent_diffusion') {
+        upBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Refine & Upscale 2× (Latent Diffusion)';
+      } else {
+        upBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Upscale 4× (Real-ESRGAN HD)';
+      }
+    };
+    if (upscalerMethodSel) {
+      upscalerMethodSel.addEventListener('change', updateUpscaleBtnLabel);
+      updateUpscaleBtnLabel();
+    }
 
-    // Real-ESRGAN Anime 4x Upscale Button
+    // Real-ESRGAN / Latent Diffusion Anime Upscale Button
     if ($('btn-upscale-diff')) {
       $('btn-upscale-diff').addEventListener('click', async () => {
         if (!state.diffusion.imageUrl && !state.diffusion.imagePath) {
@@ -1581,10 +1601,27 @@
         }
 
         const upBtn = $('btn-upscale-diff');
+        const method = upscalerMethodSel ? upscalerMethodSel.value : 'realesrgan';
+        const isLatent = method === 'latent_diffusion';
+
         upBtn.disabled = true;
-        upBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Upscaling with Real-ESRGAN...';
+        upBtn.innerHTML = isLatent
+          ? '<i class="fas fa-spinner fa-spin"></i> Refining Details (Latent Diffusion)...'
+          : '<i class="fas fa-spinner fa-spin"></i> Upscaling 4× (Real-ESRGAN HD)...';
         setCoreState('thinking');
-        showToast('Running Real-ESRGAN Anime Super-Resolution...', 'info');
+        showToast(isLatent ? 'Refining details with Latent Diffusion Resampler...' : 'Running Real-ESRGAN Anime Super-Resolution...', 'info');
+
+        const container = $('diff-result-container');
+        const previousImageHtml = container ? container.innerHTML : '';
+        if (container) {
+          container.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 40px; text-align: center;">
+              <div style="width: 52px; height: 52px; border: 3px solid rgba(236,72,153,0.25); border-top-color: #ec4899; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+              <div style="font-weight: 600; font-size: 15px; color: #fff;">${isLatent ? 'Latent Diffusion Resampling (2×)...' : 'Real-ESRGAN Anime 4× Neural Upscaling...'}</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">Synthesizing high-frequency anime linework & crisp cel-shading</div>
+            </div>
+          `;
+        }
 
         try {
           const res = await fetch('/api/upscale-image', {
@@ -1593,8 +1630,8 @@
             body: JSON.stringify({
               filename: state.diffusion.imagePath,
               image_url: state.diffusion.imageUrl,
-              scale: ($('diff-upscaler-method') && $('diff-upscaler-method').value === 'latent_diffusion') ? 2 : 4,
-              upscaler: ($('diff-upscaler-method') ? $('diff-upscaler-method').value : 'realesrgan'),
+              scale: isLatent ? 2 : 4,
+              upscaler: method,
               prompt: $('diff-prompt') ? $('diff-prompt').value : '',
               negative_prompt: $('diff-neg-prompt') ? $('diff-neg-prompt').value : '',
               image_model: $('diff-model-select') ? $('diff-model-select').value : 'counterfeit-v3'
@@ -1609,31 +1646,31 @@
           state.diffusion.imagePath = data.filename;
           if (data.image_b64) state.diffusion.imageB64 = data.image_b64;
 
-          const container = $('diff-result-container');
-          container.innerHTML = `<img src="${data.image_url}" alt="Upscaled Anime Artwork" style="max-width: 100%; max-height: 440px; border-radius: 8px; box-shadow: var(--shadow-md);">`;
+          if (container) {
+            container.innerHTML = `<img src="${data.image_url}" alt="Upscaled Anime Artwork" style="max-width: 100%; max-height: 440px; border-radius: 8px; box-shadow: var(--shadow-md); cursor: zoom-in;" title="Click to view full size">`;
+          }
 
-          showToast(`Enhanced & Upscaled to ${data.dimensions || '4×'} HD!`, 'success');
+          showToast(data.message || `Enhanced & Upscaled to ${data.dimensions || '4×'} HD!`, 'success');
           playAudioChime();
         } catch (err) {
           showToast('Upscale error: ' + err.message, 'error');
+          if (container && previousImageHtml) {
+            container.innerHTML = previousImageHtml;
+          }
         } finally {
           upBtn.disabled = false;
-          upBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Upscale 4× (Real-ESRGAN)';
+          updateUpscaleBtnLabel();
           setCoreState('idle');
         }
       });
     }
 
-    // Generate Button
-        // Copilot AI Enhance Prompt Button
+    // Copilot AI Enhance Prompt Button
     if ($('btn-enhance-prompt')) {
       $('btn-enhance-prompt').addEventListener('click', async () => {
         const promptInput = $('diff-prompt');
+        if (!promptInput) return;
         const raw = (promptInput.value || '').trim();
-        if (!raw) {
-          showToast('Enter a short idea or keyword to enhance (e.g. "cyber samurai girl")', 'info');
-          return;
-        }
 
         const btn = $('btn-enhance-prompt');
         btn.disabled = true;
@@ -1644,7 +1681,7 @@
           const res = await fetch('/api/enhance-prompt', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: raw })
+            body: JSON.stringify({ prompt: raw || '1girl, anime heroine' })
           });
           const data = await res.json();
           if (data.status === 'success' && data.enhanced_prompt) {
@@ -1662,64 +1699,171 @@
       });
     }
 
-    // Generate Button
-    $('btn-gen-diffusion').addEventListener('click', generateDiffusionImage);
-
-    // Download Button
-    $('btn-download-diff').addEventListener('click', () => {
-      if (!state.diffusion.imageUrl) {
-        showToast('No generated image to download.', 'warning');
-        return;
-      }
-      const ext = state.diffusion.imagePath ? state.diffusion.imagePath.split('.').pop() : 'png';
-      const fn = `diffusion_${state.selectedImageModel || 'sdxl'}_${Date.now()}.${ext}`;
-      triggerDownload(state.diffusion.imageUrl, fn, {
-        filename: state.diffusion.imagePath,
-        image_b64: state.diffusion.imageB64
+    // Quick Anime Style Chips
+    $$('.diff-style-chips .style-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const tag = chip.getAttribute('data-tag');
+        const input = $('diff-prompt');
+        if (!tag || !input) return;
+        const current = input.value.trim();
+        if (!current) {
+          input.value = tag;
+        } else if (!current.toLowerCase().includes(tag.toLowerCase())) {
+          input.value = current + ', ' + tag;
+        }
+        showToast(`Added style: ${chip.textContent.trim()}`, 'info');
+        input.focus();
       });
     });
 
-    // Fullscreen View
-    $('btn-view-diff-fullscreen').addEventListener('click', () => {
-      if (!state.diffusion.imageUrl) return;
-      $('image-modal-src').src = state.diffusion.imageUrl;
-      $('image-modal').classList.add('active');
-    });
+    // Reset / Clear Workbench Button
+    if ($('btn-diff-clear')) {
+      $('btn-diff-clear').addEventListener('click', () => {
+        if ($('diff-prompt')) $('diff-prompt').value = '';
+        state.diffusion.imageUrl = '';
+        state.diffusion.imagePath = '';
+        state.diffusion.imageB64 = '';
+        const container = $('diff-result-container');
+        if (container) {
+          container.innerHTML = `
+            <div class="text-muted" style="text-align: center;">
+              <i class="fas fa-image" style="font-size: 38px; color: var(--text-muted); margin-bottom: 12px;"></i>
+              <p>Generated anime illustration will render here.</p>
+            </div>
+          `;
+        }
+        if ($('diff-actions-bar')) $('diff-actions-bar').style.display = 'none';
+        showToast('Image studio workbench reset.', 'info');
+      });
+    }
 
-    $('btn-close-img-modal').addEventListener('click', () => {
-      $('image-modal').classList.remove('active');
+    // Keyboard shortcut (Ctrl+Enter) on prompt textarea
+    if ($('diff-prompt')) {
+      $('diff-prompt').addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          generateDiffusionImage();
+        }
+      });
+    }
+
+    // Click on canvas image opens Fullscreen Modal
+    if ($('diff-result-container')) {
+      $('diff-result-container').addEventListener('click', (e) => {
+        if (e.target && e.target.tagName === 'IMG' && state.diffusion.imageUrl) {
+          if ($('image-modal-src')) $('image-modal-src').src = state.diffusion.imageUrl;
+          if ($('image-modal')) $('image-modal').classList.add('active');
+        }
+      });
+    }
+
+    // Generate Button
+    if ($('btn-gen-diffusion')) {
+      $('btn-gen-diffusion').addEventListener('click', generateDiffusionImage);
+    }
+
+    // Download Button
+    if ($('btn-download-diff')) {
+      $('btn-download-diff').addEventListener('click', () => {
+        if (!state.diffusion.imageUrl) {
+          showToast('No generated image to download.', 'warning');
+          return;
+        }
+        const ext = state.diffusion.imagePath ? state.diffusion.imagePath.split('.').pop() : 'png';
+        const fn = `ciel_${state.selectedImageModel || 'anime'}_${Date.now()}.${ext}`;
+        triggerDownload(state.diffusion.imageUrl, fn, {
+          filename: state.diffusion.imagePath,
+          image_b64: state.diffusion.imageB64
+        });
+      });
+    }
+
+    // Fullscreen View
+    if ($('btn-view-diff-fullscreen')) {
+      $('btn-view-diff-fullscreen').addEventListener('click', () => {
+        if (!state.diffusion.imageUrl) return;
+        if ($('image-modal-src')) $('image-modal-src').src = state.diffusion.imageUrl;
+        if ($('image-modal')) $('image-modal').classList.add('active');
+      });
+    }
+
+    if ($('btn-close-img-modal')) {
+      $('btn-close-img-modal').addEventListener('click', () => {
+        if ($('image-modal')) $('image-modal').classList.remove('active');
+      });
+    }
+
+    // Close image modal when clicking the backdrop
+    const imgModal = $('image-modal');
+    if (imgModal) {
+      imgModal.addEventListener('click', (e) => {
+        if (e.target === imgModal) {
+          imgModal.classList.remove('active');
+        }
+      });
+    }
+
+    // Close image modal on Escape key
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const modal = $('image-modal');
+        if (modal && modal.classList.contains('active')) {
+          modal.classList.remove('active');
+        }
+      }
     });
 
     // Vectorize in Primitive
-    $('btn-diff-to-primitive').addEventListener('click', () => {
-      if (!state.diffusion.imagePath && !state.diffusion.imageUrl) return;
-      state.primitive.imagePath = state.diffusion.imagePath || state.diffusion.imageUrl;
-      $('prim-preview-thumb').src = state.diffusion.imageUrl;
-      $('prim-preview-thumb').style.display = 'block';
-      $('prim-drop-prompt').style.display = 'none';
-      switchView('primitive');
-      showToast('Image loaded into Primitive Studio!', 'success');
-    });
+    if ($('btn-diff-to-primitive')) {
+      $('btn-diff-to-primitive').addEventListener('click', () => {
+        if (!state.diffusion.imagePath && !state.diffusion.imageUrl) return;
+        state.primitive.imagePath = state.diffusion.imagePath || state.diffusion.imageUrl;
+        if (state.diffusion.imageB64) state.primitive.imageB64 = state.diffusion.imageB64;
+        if ($('prim-preview-thumb')) {
+          $('prim-preview-thumb').src = state.diffusion.imageUrl;
+          $('prim-preview-thumb').style.display = 'block';
+        }
+        if ($('prim-drop-prompt')) $('prim-drop-prompt').style.display = 'none';
+        switchView('primitive');
+        showToast('Image loaded into Primitive Studio!', 'success');
+      });
+    }
   }
 
   async function generateDiffusionImage() {
-    const prompt = $('diff-prompt').value.trim();
+    const promptInput = $('diff-prompt');
+    const prompt = promptInput ? promptInput.value.trim() : '';
     if (!prompt) {
       showToast('Please enter an image prompt.', 'warning');
+      if (promptInput) promptInput.focus();
       return;
     }
 
-    const negPrompt = $('diff-neg-prompt').value.trim();
-    const modelKey = $('diff-model-select').value;
-    const resVal = $('diff-res-select').value.split('x');
-    const width = parseInt(resVal[0], 10);
-    const height = parseInt(resVal[1], 10);
-    const steps = parseInt($('diff-steps-slider').value, 10);
+    const negPrompt = $('diff-neg-prompt') ? $('diff-neg-prompt').value.trim() : '';
+    const modelKey = $('diff-model-select') ? $('diff-model-select').value : 'counterfeit-v3';
+    const resVal = $('diff-res-select') ? $('diff-res-select').value.split('x') : ['512', '768'];
+    const width = parseInt(resVal[0], 10) || 512;
+    const height = parseInt(resVal[1], 10) || 768;
+    const steps = $('diff-steps-slider') ? parseInt($('diff-steps-slider').value, 10) : 20;
 
     const btn = $('btn-gen-diffusion');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rendering Diffusion Image...';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rendering Diffusion Image...';
+    }
     setCoreState('thinking');
+
+    const container = $('diff-result-container');
+    if (container) {
+      container.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 40px; text-align: center;">
+          <div style="width: 52px; height: 52px; border: 3px solid rgba(168,85,247,0.25); border-top-color: #a855f7; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+          <div style="font-weight: 600; font-size: 15px; color: #fff;">Synthesizing Anime Artwork...</div>
+          <div style="font-size: 12px; color: var(--cyan);"><i class="fas fa-layer-group"></i> Model: ${modelKey} · ${width}×${height} · ${steps} Steps</div>
+          <div style="font-size: 11px; color: var(--text-muted);">Iterative latent denoising running locally...</div>
+        </div>
+      `;
+    }
 
     try {
       const res = await fetch('/api/generate-image', {
@@ -1744,17 +1888,33 @@
       state.diffusion.imagePath = data.filename;
       state.diffusion.imageB64 = data.image_b64 || '';
 
-      const container = $('diff-result-container');
-      container.innerHTML = `<img src="${data.image_url}" alt="AI Generated Image" style="max-width: 100%; max-height: 440px; border-radius: 8px; box-shadow: var(--shadow-md);">`;
+      if (container) {
+        container.innerHTML = `<img src="${data.image_url}" alt="AI Generated Image" style="max-width: 100%; max-height: 440px; border-radius: 8px; box-shadow: var(--shadow-md); cursor: zoom-in;" title="Click to view full size">`;
+      }
 
-      $('diff-actions-bar').style.display = 'flex';
-      showToast('Image Generated Successfully!', 'success');
+      if ($('diff-actions-bar')) $('diff-actions-bar').style.display = 'flex';
+      showToast('Anime Art Generated Successfully!', 'success');
       playAudioChime();
     } catch (err) {
       showToast('Image generation error: ' + err.message, 'error');
+      if (container) {
+        container.innerHTML = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 30px; text-align: center; color: var(--rose);">
+            <i class="fas fa-triangle-exclamation" style="font-size: 32px;"></i>
+            <div style="font-weight: 600; font-size: 14px;">Generation Failed</div>
+            <div style="font-size: 12px; max-width: 380px; color: var(--text-secondary);">${err.message}</div>
+            <button class="ide-action-btn primary" id="btn-diff-retry" style="margin-top: 6px;"><i class="fas fa-rotate-right"></i> Try Again</button>
+          </div>
+        `;
+        if ($('btn-diff-retry')) {
+          $('btn-diff-retry').addEventListener('click', generateDiffusionImage);
+        }
+      }
     } finally {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-magic"></i> Generate AI Image';
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-magic"></i> Generate Anime Art';
+      }
       setCoreState('idle');
     }
   }
@@ -2079,8 +2239,11 @@
       $('btn-download-modal').addEventListener('click', () => {
         const src = $('image-modal-src').src;
         if (!src) return;
-        const fn = `ciel_image_${Date.now()}.png`;
-        triggerDownload(src, fn);
+        const fn = state.diffusion.imagePath ? `ciel_${state.diffusion.imagePath}` : `ciel_image_${Date.now()}.png`;
+        triggerDownload(src, fn, {
+          filename: state.diffusion.imagePath,
+          image_b64: state.diffusion.imageB64
+        });
       });
     }
 

@@ -17,12 +17,20 @@ import socket
 import subprocess
 import sys
 import tempfile
+import gc
 import threading
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
+
+import torch
+try:
+    import transformers
+    import diffusers
+except ImportError:
+    pass
 
 import edge_tts
 import numpy as np
@@ -284,7 +292,7 @@ def _resolve_local_model_path(repo_id: str) -> str:
                 return str(snapshots[0])
     return repo_id
 
-def load_image_pipeline(model_key: str = "sdxl-turbo"):
+def load_image_pipeline(model_key: str = "counterfeit-v3"):
     if model_key in _loaded_pipes:
         return _loaded_pipes[model_key]
     config = IMAGE_MODELS.get(model_key)
@@ -293,16 +301,36 @@ def load_image_pipeline(model_key: str = "sdxl-turbo"):
     with _loading_lock:
         if model_key in _loaded_pipes:
             return _loaded_pipes[model_key]
+
+        # Free previous diffusion pipelines to prevent RAM exhaustion on CPU
+        for old_key in list(_loaded_pipes.keys()):
+            try:
+                log.info(f"[Image] Releasing cached pipeline '{old_key}' to conserve RAM...")
+                del _loaded_pipes[old_key]
+            except Exception:
+                pass
+        _loaded_pipes.clear()
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
         try:
-            import torch
             from diffusers import AutoPipelineForText2Image, StableDiffusionPipeline
             log.info(f"[Image] Loading '{config['label']}'...")
-            kwargs = dict(torch_dtype=torch.float32, safety_checker=None, requires_safety_checker=False)
             model_target = _resolve_local_model_path(config["repo"])
+            is_local = (model_target != config["repo"]) or os.path.isdir(model_target)
+
+            kwargs = dict(torch_dtype=torch.float32)
+            if is_local:
+                kwargs["local_files_only"] = True
+
             if config["pipeline"] == "AutoPipelineForText2Image":
                 pipe = AutoPipelineForText2Image.from_pretrained(model_target, **kwargs)
             else:
+                kwargs["safety_checker"] = None
+                kwargs["requires_safety_checker"] = False
                 pipe = StableDiffusionPipeline.from_pretrained(model_target, **kwargs)
+
             if hasattr(pipe, "safety_checker"):
                 pipe.safety_checker = None
             pipe = pipe.to("cpu")
@@ -310,7 +338,7 @@ def load_image_pipeline(model_key: str = "sdxl-turbo"):
             _loaded_pipes[model_key] = pipe
             log.info(f"[Image] '{model_key}' ready!")
         except Exception as e:
-            log.error(f"[Image] Load error: {e}")
+            log.error(f"[Image] Load error: {e}", exc_info=True)
             return None
     return _loaded_pipes.get(model_key)
 
@@ -715,7 +743,7 @@ def api_save_image_to_downloads():
         cand = os.path.join(IMAGE_DIR, clean_fn)
         if os.path.isfile(cand):
             src_path = cand
-    if not src_path and image_url and "/static/images/" in image_url:
+    if not src_path and image_url:
         clean_fn = os.path.basename(image_url.split("?")[0])
         cand = os.path.join(IMAGE_DIR, clean_fn)
         if os.path.isfile(cand):
@@ -1772,16 +1800,42 @@ def api_generate_image():
         return jsonify({"status": "error", "message": f"Model '{model_key}' failed to load"}), 500
     try:
         log.info(f"[Image] Generating '{prompt}' ({model_key})")
-        result = pipe(prompt=prompt, negative_prompt=negative_prompt, num_inference_steps=steps, guidance_scale=float(config["guidance_scale"]), width=width, height=height)
+        if model_key == "sdxl-turbo":
+            result = pipe(
+                prompt=prompt,
+                num_inference_steps=steps,
+                guidance_scale=0.0,
+                width=width,
+                height=height
+            )
+        else:
+            result = pipe(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                num_inference_steps=steps,
+                guidance_scale=float(config["guidance_scale"]),
+                width=width,
+                height=height
+            )
         image = result.images[0]
         filename = f"{model_key}_{uuid.uuid4().hex[:8]}.png"
         image.save(os.path.join(IMAGE_DIR, filename), format="PNG")
         buf = io.BytesIO()
         image.save(buf, format="PNG")
         b64 = base64.b64encode(buf.getvalue()).decode()
-        return jsonify({"status": "success", "filename": filename, "model_used": config["label"], "image_url": f"/static/images/{filename}", "image_b64": f"data:image/png;base64,{b64}"})
+        return jsonify({
+            "status": "success",
+            "filename": filename,
+            "model_used": config["label"],
+            "image_url": f"/static/images/{filename}",
+            "image_b64": f"data:image/png;base64,{b64}",
+            "width": width,
+            "height": height,
+            "steps": steps,
+            "dimensions": f"{width} × {height}"
+        })
     except Exception as e:
-        log.error(f"[Image] {e}")
+        log.error(f"[Image] Generation error: {e}", exc_info=True)
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # ── Real-ESRGAN Anime 4x HD Upscaler (Stage 7 of Anime Pipeline) ──

@@ -453,12 +453,20 @@
               <!-- Prompt Input -->
               <div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                  <label style="font-size: 12px; color: var(--text-secondary); margin: 0;">Prompt</label>
+                  <label style="font-size: 12px; color: var(--text-secondary); margin: 0;">Prompt (Ctrl+Enter to generate)</label>
                   <button type="button" id="btn-enhance-prompt" class="ide-action-btn" style="padding: 2px 8px; font-size: 11px; background: rgba(168,85,247,0.12); color: #c084fc; border: 1px solid rgba(168,85,247,0.3); border-radius: 4px; cursor: pointer;">
                     <i class="fas fa-wand-magic-sparkles"></i> Copilot AI Enhance
                   </button>
                 </div>
                 <textarea class="input-styled" id="diff-prompt" rows="3" placeholder="1girl, silver hair, glowing blue eyes, elegant magical robes, cinematic lighting, masterpiece, 8k..."></textarea>
+                <div class="diff-style-chips" style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px;">
+                  <span class="style-chip" data-tag="cyberpunk, futuristic neon lighting, cyber katana">Cyberpunk</span>
+                  <span class="style-chip" data-tag="fantasy magical circle, glowing runic spells">Fantasy Magic</span>
+                  <span class="style-chip" data-tag="Makoto Shinkai style, radiant sky, fluffy clouds">Shinkai Sky</span>
+                  <span class="style-chip" data-tag="Studio Ghibli aesthetic, lush landscape, nostalgic">Ghibli Style</span>
+                  <span class="style-chip" data-tag="chibi, cute expressive, kawaii anime character">Chibi Kawaii</span>
+                  <span class="style-chip" data-tag="mecha armor, high-tech exosuit, particle effects">Mecha Sci-Fi</span>
+                </div>
               </div>
               
               <!-- Negative Prompt -->
@@ -467,9 +475,14 @@
                 <textarea class="input-styled" id="diff-neg-prompt" rows="2" placeholder="Blurry, low quality, bad anatomy, watermark">Blurry, low quality, bad anatomy, watermark</textarea>
               </div>
 
-              <button class="btn-generate-prim" id="btn-gen-diffusion" style="background: linear-gradient(135deg, #7c3aed, #a855f7);">
-                <i class="fas fa-magic"></i> Generate Anime Art
-              </button>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-generate-prim" id="btn-gen-diffusion" style="flex: 1; background: linear-gradient(135deg, #7c3aed, #a855f7);" title="Generate Anime Art (Ctrl+Enter)">
+                  <i class="fas fa-magic"></i> Generate Anime Art
+                </button>
+                <button type="button" class="ide-action-btn" id="btn-diff-clear" style="padding: 10px 14px; border-color: rgba(255,255,255,0.12);" title="Reset Workbench">
+                  <i class="fas fa-rotate-left"></i>
+                </button>
+              </div>
             </div>
 
             <!-- Result Showcase -->
